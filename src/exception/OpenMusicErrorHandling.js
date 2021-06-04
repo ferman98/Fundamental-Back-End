@@ -4,26 +4,24 @@ const errorCode = {
   500: 'Internal Server Error',
 };
 
-class OpenMusicErrorHandling extends Error {
-  constructor(msg, code) {
-    const statusCode = code || 500;
-    const error = errorCode[statusCode] || 'Error';
-    const message = msg || errorCode[statusCode];
+const OpenMusicErrorHandling = (msg, code) => {
+  const statusCode = code || 500;
+  const error = errorCode[statusCode] || 'Error';
+  const message = msg || errorCode[statusCode];
 
-    const mainError = new Error(msg);
-    mainError.isBoom = true;
-    mainError.output = {
-      statusCode,
-      payload: {
-        statusCode: `${statusCode} (${error})`,
-        status: 'fail',
-        message,
-      },
-      headers: {},
-    };
+  const mainError = new Error(message);
+  mainError.isBoom = true;
+  mainError.output = {
+    statusCode,
+    payload: {
+      statusCode: `${statusCode} (${error})`,
+      status: 'fail',
+      message,
+    },
+    headers: {},
+  };
 
-    return mainError;
-  }
-}
+  return mainError;
+};
 
 module.exports = OpenMusicErrorHandling;

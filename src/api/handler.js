@@ -16,7 +16,7 @@ const handler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw new OpenMusicErrorHandling(e.message, 404);
+      throw OpenMusicErrorHandling(e.message, 404);
     }
   },
 
@@ -25,7 +25,7 @@ const handler = {
 
     const result = await pool.query(`SELECT * FROM songs WHERE id = '${songId}'`);
     if (result.rows.length === 0) {
-      throw new OpenMusicErrorHandling('Data Not Found', 404);
+      throw OpenMusicErrorHandling('Data Not Found', 404);
     }
     try {
       const {
@@ -51,14 +51,14 @@ const handler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw new OpenMusicErrorHandling(e.message, 404);
+      throw OpenMusicErrorHandling(e.message, 404);
     }
   },
 
   async addSong(req, h) {
     const validationResult = songSchema.validate(req.payload);
     if (validationResult.error) {
-      throw new OpenMusicErrorHandling(validationResult.error.message, 400);
+      throw OpenMusicErrorHandling(validationResult.error.message, 400);
     }
 
     try {
@@ -85,7 +85,7 @@ const handler = {
       response.code(201);
       return response;
     } catch (e) {
-      throw new OpenMusicErrorHandling(e.message, 404);
+      throw OpenMusicErrorHandling(e.message, 404);
     }
   },
 
@@ -93,11 +93,11 @@ const handler = {
     const { songId } = req.params;
     const validationResult = songSchema.validate(req.payload);
     if (validationResult.error) {
-      throw new OpenMusicErrorHandling(validationResult.error.message, 400);
+      throw OpenMusicErrorHandling(validationResult.error.message, 400);
     }
     const result = await pool.query(`SELECT * FROM songs WHERE id = '${songId}'`);
     if (result.rows.length === 0) {
-      throw new OpenMusicErrorHandling('Data Not Found', 404);
+      throw OpenMusicErrorHandling('Data Not Found', 404);
     }
     try {
       const updatedAt = new Date().toISOString();
@@ -118,7 +118,7 @@ const handler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw new OpenMusicErrorHandling(e.message, 404);
+      throw OpenMusicErrorHandling(e.message, 404);
     }
   },
 
@@ -126,7 +126,7 @@ const handler = {
     const { songId } = req.params;
     const result = await pool.query(`SELECT * FROM songs WHERE id = '${songId}'`);
     if (result.rows.length === 0) {
-      throw new OpenMusicErrorHandling('Data Not Found', 404);
+      throw OpenMusicErrorHandling('Data Not Found', 404);
     }
     try {
       await pool.query(`DELETE FROM songs WHERE id = '${songId}' RETURNING id`);
@@ -137,7 +137,7 @@ const handler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw new OpenMusicErrorHandling(e.message, 404);
+      throw OpenMusicErrorHandling(e.message, 404);
     }
   },
 };
