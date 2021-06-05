@@ -7,7 +7,10 @@ const songHelper = require('./helper');
 const songHandler = {
   async getAllSongs(req, h) {
     try {
-      const result = await pool.query('SELECT id, title, performer FROM songs');
+      const query = {
+        text: 'SELECT id, title, performer FROM songs',
+      };
+      const result = await pool.query(query);
       const response = h.response({
         status: 'success',
         data: {
@@ -24,7 +27,11 @@ const songHandler = {
   async getSongById(req, h) {
     const { songId } = req.params;
 
-    const result = await pool.query(`SELECT * FROM songs WHERE id = '${songId}'`);
+    const query = {
+      text: 'SELECT * FROM songs WHERE id = $1',
+      values: [songId],
+    };
+    const result = await pool.query(query);
     if (result.rows.length === 0) {
       throw OpenMusicErrorHandling('Data Not Found', 404);
     }
@@ -74,13 +81,17 @@ const songHandler = {
         duration,
       } = req.payload;
 
-      const result = await pool.query(`INSERT INTO songs(id, title, year, performer, genre, duration, date_insert, date_update) VALUES('${id}', '${title}', '${year}', '${performer}', '${genre}', '${duration}', '${insertedAt}', '${updatedAt}') RETURNING id`);
+      const query = {
+        text: 'INSERT INTO songs(id, title, year, performer, genre, duration, date_insert, date_update) VALUES($1, $2, $3, $4, $5, $6, $7, $8)',
+        values: [id, title, year, performer, genre, duration, insertedAt, updatedAt],
+      };
+      await pool.query(query);
 
       const response = h.response({
         status: 'success',
         message: 'Lagu berhasil ditambahkan',
         data: {
-          songId: result.rows[0].id,
+          songId: id,
         },
       });
       response.code(201);
@@ -107,7 +118,11 @@ const songHandler = {
         duration,
       } = req.payload;
 
-      await pool.query(`UPDATE songs SET title = '${title}', year = '${year}', performer = '${performer}', genre = '${genre}', duration = '${duration}', date_update = '${updatedAt}' WHERE id = '${songId}'`);
+      const query = {
+        text: 'UPDATE songs SET title = $1, year = $2, performer = $3, genre = $4, duration = $5, date_update = $6 WHERE id = $7',
+        values: [title, year, performer, genre, duration, updatedAt, songId],
+      };
+      await pool.query(query);
 
       const response = h.response({
         status: 'success',
@@ -124,7 +139,11 @@ const songHandler = {
     const { songId } = req.params;
     songHelper.validateSongById(songId);
     try {
-      await pool.query(`DELETE FROM songs WHERE id = '${songId}' RETURNING id`);
+      const query = {
+        text: 'DELETE FROM songs WHERE id = $1',
+        values: [songId],
+      };
+      await pool.query(query);
       const response = h.response({
         status: 'success',
         message: 'lagu berhasil dihapus',

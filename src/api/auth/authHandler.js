@@ -1,6 +1,6 @@
 const tokenManager = require('../../tokenize/TokenManager');
 const pool = require('../../database');
-const userHandler = require('../user/userHandler');
+const userHelper = require('../user/helper');
 const { PostAuthenticationPayloadSchema, PutAuthenticationPayloadSchema, DeleteAuthenticationPayloadSchema } = require('../../validator/authSchema');
 const OpenMusicErrorHandling = require('../../exception/OpenMusicErrorHandling');
 
@@ -12,11 +12,15 @@ const handler = {
         throw OpenMusicErrorHandling(validationResult.error.message, 400);
       }
       const { username, password } = req.payload;
-      const id = await userHandler.verifyUserCredential(username, password);
+      const id = await userHelper.verifyUserCredential(username, password);
       const accessToken = tokenManager.generateAccessToken({ id });
       const refreshToken = tokenManager.generateRefreshToken({ id });
 
-      // await pool.query(`INSERT INTO authentications VALUES('${refreshToken}')`);
+      const query = {
+        text: 'INSERT INTO authentications VALUES($1)',
+        values: [refreshToken],
+      };
+      await pool.query(query);
 
       const response = h.response({
         status: 'success',
@@ -43,7 +47,11 @@ const handler = {
       const { refreshToken } = req.payload;
       const { id } = tokenManager.verifyRefreshToken(refreshToken);
 
-      const result = await pool.query(`SELECT token FROM authentications WHERE token = '${refreshToken}'`);
+      const query = {
+        text: 'SELECT token FROM authentications WHERE token = $1',
+        values: [refreshToken],
+      };
+      const result = await pool.query(query);
       if (result.rows.length === 0) {
         throw OpenMusicErrorHandling('Refresh token tidak valid', 404);
       }
@@ -70,7 +78,11 @@ const handler = {
 
       const { refreshToken } = req.payload;
 
-      await pool.query(`DELETE FROM authentications WHERE token = '${refreshToken}'`);
+      const query = {
+        text: 'DELETE FROM authentications WHERE token = $1',
+        values: [refreshToken],
+      };
+      await pool.query(query);
       const response = h.response({
         status: 'success',
         message: 'Refresh token berhasil dihapus',

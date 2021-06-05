@@ -58,16 +58,22 @@ exports.up = (pgm) => {
     UNIQUE (user_id))
     `);
 
-  // // RELASI USER DAN PLAYLISTS
+  // RELASI USER DAN PLAYLISTS
   pgm.sql(`ALTER TABLE playlists ADD CONSTRAINT playlist_of_users FOREIGN KEY (owner) REFERENCES users(id) ON DELETE CASCADE ON UPDATE RESTRICT`);
 
-  // // RELASI PLAYLIST DAN PLAYLISTSSONG
+  // RELASI PLAYLIST DAN PLAYLISTSSONG
   pgm.sql(`ALTER TABLE playlistsongs ADD CONSTRAINT playlistsong_of_playlist FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE ON UPDATE RESTRICT`);
 
-  // // RELASI SONG DAN PLAYLISTSSONG
+  // RELASI SONG DAN PLAYLISTSSONG
   pgm.sql(`ALTER TABLE playlistsongs ADD CONSTRAINT song_in_playlistsongs FOREIGN KEY (song_id) REFERENCES songs(id) ON DELETE CASCADE ON UPDATE RESTRICT`);
+
+  // RELASI COLLABORATION DAN USER
+  pgm.sql(`ALTER TABLE collaborations ADD CONSTRAINT user_collab FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE RESTRICT`);
+
+  // RELASI COLLABORATION DAN PLAYLIST
+  pgm.sql(`ALTER TABLE collaborations ADD CONSTRAINT playlist_collab FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE ON UPDATE RESTRICT`);
 };
 
 exports.down = (pgm) => {
-  pgm.sql("DROP TABLE songs, users, authentications, playlistsongs, playlists");
+  pgm.sql("DROP TABLE songs, users, authentications, playlistsongs, playlists, collaborations");
 };

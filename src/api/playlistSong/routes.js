@@ -1,4 +1,4 @@
-const handler = require('./authPlaylistSong');
+const handler = require('./playlistSongHandler');
 
 const routes = [
   {
