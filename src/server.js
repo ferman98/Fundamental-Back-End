@@ -1,7 +1,11 @@
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
-const routerPlugin = require('./services/plugin');
+const authPlugin = require('./plugin/authentications');
+const songPlugin = require('./plugin/song');
+const userPlugin = require('./plugin/users');
+const playlistPlugin = require('./plugin/playlist');
+const playlistSongPlugin = require('./plugin/playlistSong');
 
 const init = async () => {
   const server = Hapi.server({
@@ -14,10 +18,28 @@ const init = async () => {
     },
   });
 
-  await server.register({
-    plugin: routerPlugin,
-    options: {},
-  });
+  await server.register([
+    {
+      plugin: authPlugin,
+      options: {},
+    },
+    {
+      plugin: songPlugin,
+      options: {},
+    },
+    {
+      plugin: userPlugin,
+      options: {},
+    },
+    {
+      plugin: playlistPlugin,
+      options: {},
+    },
+    {
+      plugin: playlistSongPlugin,
+      options: {},
+    },
+  ]);
 
   server.ext('onPreResponse', (request) => {
     const { response } = request;

@@ -1,9 +1,10 @@
 const { nanoid } = require('nanoid');
-const songSchema = require('../validator/schema');
-const pool = require('../db/postgre');
-const OpenMusicErrorHandling = require('../exception/OpenMusicErrorHandling');
+const songSchema = require('../../validator/songSchema');
+const pool = require('../../database');
+const OpenMusicErrorHandling = require('../../exception/OpenMusicErrorHandling');
+const songHelper = require('./helper');
 
-const handler = {
+const songHandler = {
   async getAllSongs(req, h) {
     try {
       const result = await pool.query('SELECT id, title, performer FROM songs');
@@ -95,10 +96,7 @@ const handler = {
     if (validationResult.error) {
       throw OpenMusicErrorHandling(validationResult.error.message, 400);
     }
-    const result = await pool.query(`SELECT * FROM songs WHERE id = '${songId}'`);
-    if (result.rows.length === 0) {
-      throw OpenMusicErrorHandling('Data Not Found', 404);
-    }
+    songHelper.validateSongById(songId);
     try {
       const updatedAt = new Date().toISOString();
       const {
@@ -124,10 +122,7 @@ const handler = {
 
   async deleteSong(req, h) {
     const { songId } = req.params;
-    const result = await pool.query(`SELECT * FROM songs WHERE id = '${songId}'`);
-    if (result.rows.length === 0) {
-      throw OpenMusicErrorHandling('Data Not Found', 404);
-    }
+    songHelper.validateSongById(songId);
     try {
       await pool.query(`DELETE FROM songs WHERE id = '${songId}' RETURNING id`);
       const response = h.response({
@@ -142,4 +137,4 @@ const handler = {
   },
 };
 
-module.exports = handler;
+module.exports = songHandler;
