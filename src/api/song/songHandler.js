@@ -3,6 +3,7 @@ const songSchema = require('../../validator/songSchema');
 const pool = require('../../database');
 const OpenMusicErrorHandling = require('../../exception/OpenMusicErrorHandling');
 const songHelper = require('./helper');
+const setError = require('../../exception/errorSetter');
 
 const songHandler = {
   async getAllSongs(req, h) {
@@ -20,22 +21,22 @@ const songHandler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
   async getSongById(req, h) {
-    const { songId } = req.params;
-
-    const query = {
-      text: 'SELECT * FROM songs WHERE id = $1',
-      values: [songId],
-    };
-    const result = await pool.query(query);
-    if (result.rows.length === 0) {
-      throw OpenMusicErrorHandling('Data Not Found', 404);
-    }
     try {
+      const { songId } = req.params;
+
+      const query = {
+        text: 'SELECT * FROM songs WHERE id = $1',
+        values: [songId],
+      };
+      const result = await pool.query(query);
+      if (result.rows.length === 0) {
+        throw setError.NotFound('Data Not Found');
+      }
       const {
         // eslint-disable-next-line camelcase
         id, title, year, performer, genre, duration, date_insert, date_update,
@@ -59,17 +60,17 @@ const songHandler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
   async addSong(req, h) {
-    const validationResult = songSchema.validate(req.payload);
-    if (validationResult.error) {
-      throw OpenMusicErrorHandling(validationResult.error.message, 400);
-    }
-
     try {
+      const validationResult = songSchema.validate(req.payload);
+      if (validationResult.error) {
+        throw setError.BadRequest(validationResult.error.message);
+      }
+
       const id = `song-${nanoid(16)}`;
       const insertedAt = new Date().toISOString();
       const updatedAt = new Date().toISOString();
@@ -97,18 +98,18 @@ const songHandler = {
       response.code(201);
       return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
   async updateSong(req, h) {
-    const { songId } = req.params;
-    const validationResult = songSchema.validate(req.payload);
-    if (validationResult.error) {
-      throw OpenMusicErrorHandling(validationResult.error.message, 400);
-    }
-    songHelper.validateSongById(songId);
     try {
+      const { songId } = req.params;
+      const validationResult = songSchema.validate(req.payload);
+      if (validationResult.error) {
+        throw setError.BadRequest(validationResult.error.message);
+      }
+      await songHelper.checkSongInDB(songId);
       const updatedAt = new Date().toISOString();
       const {
         title,
@@ -131,14 +132,14 @@ const songHandler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
   async deleteSong(req, h) {
-    const { songId } = req.params;
-    songHelper.validateSongById(songId);
     try {
+      const { songId } = req.params;
+      await songHelper.checkSongInDB(songId);
       const query = {
         text: 'DELETE FROM songs WHERE id = $1',
         values: [songId],
@@ -151,7 +152,7 @@ const songHandler = {
       response.code(200);
       return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 };

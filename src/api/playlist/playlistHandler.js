@@ -3,19 +3,25 @@ const tokenManager = require('../../tokenize/TokenManager');
 const pool = require('../../database');
 const { PostPlaylistPayloadSchema } = require('../../validator/playlistScheme');
 const OpenMusicErrorHandling = require('../../exception/OpenMusicErrorHandling');
+const setError = require('../../exception/errorSetter');
+const playlistHelper = require('./helper');
 
 const handler = {
   async postPlaylistHandler(req, h) {
     try {
       const validationResult = PostPlaylistPayloadSchema.validate(req.payload);
       if (validationResult.error) {
-        throw OpenMusicErrorHandling(validationResult.error.message, 400);
+        throw setError.BadRequest(validationResult.error.message);
       }
 
+      const { authorization } = req.headers;
+      if (!authorization) {
+        throw setError.Unauthorized('Token tidak ditemukan');
+      }
+
+      const token = authorization.replace(/^Bearer\s*/, '');
       const playlistId = `playlist-${nanoid(16)}`;
       const { name } = req.payload;
-      const { authorization } = req.headers;
-      const token = authorization.replace(/^Bearer\s*/, '');
       const { id: owner } = tokenManager.verifyAccessToken(token);
 
       const query = {
@@ -34,27 +40,24 @@ const handler = {
       response.code(201);
       return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
   async getPlaylistHandler(req, h) {
     try {
       const { authorization } = req.headers;
+      if (!authorization) {
+        throw setError.Unauthorized('Token tidak ditemukan');
+      }
+
       const token = authorization.replace(/^Bearer\s*/, '');
       const { id: owner } = tokenManager.verifyAccessToken(token);
 
-      const query = {
-        text: `
-        SELECT playlists.id, playlists.name, users.username
-        FROM playlists
-        JOIN users
-        ON playlist.owner = users.id AND playlist = $1`,
-        values: [owner],
-      };
-      const result = await pool.query(query);
-      if (result.rows.length === 0) {
-        throw OpenMusicErrorHandling('Data Not Found', 404);
+      const result = await playlistHelper.getPlaylistDataWithValidate(owner);
+      const { length } = result.rows;
+      if (length === 0) {
+        throw setError.NotFound('Data Not Found');
       }
       const response = h.response({
         status: 'success',
@@ -62,21 +65,37 @@ const handler = {
           playlists: result.rows,
         },
       });
-      response.code(201);
+      response.code(200);
+      return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
   async deletePlaylistHandler(req, h) {
     try {
-      const { playlistId } = req.params;
       const { authorization } = req.headers;
-      const token = authorization.replace(/^Bearer\s*/, '');
-      const { owner } = tokenManager.verifyAccessToken(token);
+      if (!authorization) {
+        throw setError.Unauthorized('Token tidak ditemukan');
+      }
 
+      const token = authorization.replace(/^Bearer\s*/, '');
+      const { playlistId } = req.params;
+      const { id: owner } = tokenManager.verifyAccessToken(token);
+
+      console.log(playlistId);
+      console.log(owner);
+      // await playlistHelper.validatePlaylistByPlaylistIdAndUserId(playlistId, owner);
+      await playlistHelper.deletPlaylistWithValidate(playlistId, owner);
+      // await playlistHelper.deleteWithColaboration(playlistId, owner);
       const query = {
-        text: 'DELETE FROM playlists WHERE id = $1 AND owner = $2',
+        text: `DELETE FROM playlists WHERE id = $1 AND owner = (
+          SELECT users.id
+          FROM playlists
+          JOIN collaborations ON playlists.id = collaborations.playlist_id
+          JOIN users ON playlists.owner = users.id
+          AND collaborations.user_id = $2
+        ) OR owner = $2`,
         values: [playlistId, owner],
       };
       await pool.query(query);
@@ -85,8 +104,9 @@ const handler = {
         message: 'Playlist berhasil dihapus',
       });
       response.code(200);
+      return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 };

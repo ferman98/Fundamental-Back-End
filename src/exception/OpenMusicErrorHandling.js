@@ -1,29 +1,18 @@
-const errorCode = {
-  400: 'Bad Request',
-  401: 'Unauthorized',
-  403: 'Forbidden',
-  404: 'Not Found',
-  500: 'Internal Server Error',
-};
-
-const OpenMusicErrorHandling = (msg, code) => {
-  const statusCode = code || 500;
-  const error = errorCode[statusCode] || 'Error';
-  const message = msg || errorCode[statusCode];
-
-  const mainError = new Error(message);
-  mainError.isBoom = true;
-  mainError.output = {
-    statusCode,
-    payload: {
-      statusCode: `${statusCode} (${error})`,
-      status: 'fail',
-      message,
-    },
-    headers: {},
-  };
-
-  return mainError;
-};
+class OpenMusicErrorHandling extends Error {
+  constructor(message, error) {
+    const { statusCode, payload } = error.output;
+    super(message);
+    this.isBoom = true;
+    this.output = {
+      statusCode,
+      payload: {
+        statusCode: payload.statusCode,
+        status: payload.status,
+        message: payload.message,
+      },
+      headers: {},
+    };
+  }
+}
 
 module.exports = OpenMusicErrorHandling;

@@ -34,8 +34,7 @@ exports.up = (pgm) => {
     id VARCHAR(50) NOT NULL ,
     name TEXT NOT NULL ,
     owner VARCHAR(50) NOT NULL ,
-    PRIMARY KEY (id),
-    UNIQUE (owner))
+    PRIMARY KEY (id))
     `);
 
   // CREATE TABLE PLAYLISTSONGS
@@ -43,9 +42,7 @@ exports.up = (pgm) => {
     id VARCHAR(50) NOT NULL ,
     playlist_id VARCHAR(50) NOT NULL ,
     song_id VARCHAR(50) NOT NULL ,
-    PRIMARY KEY (id),
-    UNIQUE (song_id),
-    UNIQUE (playlist_id))
+    PRIMARY KEY (id))
     `);
 
   // CREATE TABLE COLLABORATIONS
@@ -53,9 +50,7 @@ exports.up = (pgm) => {
     id VARCHAR(50) NOT NULL ,
     playlist_id VARCHAR(50) NOT NULL ,
     user_id VARCHAR(50) NOT NULL ,
-    PRIMARY KEY (id),
-    UNIQUE (playlist_id),
-    UNIQUE (user_id))
+    PRIMARY KEY (id))
     `);
 
   // RELASI USER DAN PLAYLISTS
@@ -75,5 +70,5 @@ exports.up = (pgm) => {
 };
 
 exports.down = (pgm) => {
-  pgm.sql("DROP TABLE songs, users, authentications, playlistsongs, playlists, collaborations");
+  pgm.sql("DROP TABLE collaborations, songs, users, authentications, playlistsongs, playlists");
 };

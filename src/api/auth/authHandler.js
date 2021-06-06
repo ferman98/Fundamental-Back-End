@@ -3,14 +3,17 @@ const pool = require('../../database');
 const userHelper = require('../user/helper');
 const { PostAuthenticationPayloadSchema, PutAuthenticationPayloadSchema, DeleteAuthenticationPayloadSchema } = require('../../validator/authSchema');
 const OpenMusicErrorHandling = require('../../exception/OpenMusicErrorHandling');
+const setError = require('../../exception/errorSetter');
+const authHelper = require('./helper');
 
 const handler = {
   async postAuthenticationHandler(req, h) {
     try {
       const validationResult = PostAuthenticationPayloadSchema.validate(req.payload);
       if (validationResult.error) {
-        throw OpenMusicErrorHandling(validationResult.error.message, 400);
+        throw setError.BadRequest(validationResult.error.message);
       }
+
       const { username, password } = req.payload;
       const id = await userHelper.verifyUserCredential(username, password);
       const accessToken = tokenManager.generateAccessToken({ id });
@@ -33,7 +36,7 @@ const handler = {
       response.code(201);
       return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
@@ -41,21 +44,15 @@ const handler = {
     try {
       const validationResult = PutAuthenticationPayloadSchema.validate(req.payload);
       if (validationResult.error) {
-        throw OpenMusicErrorHandling(validationResult.error.message, 400);
+        throw setError.BadRequest(validationResult.error.message);
       }
 
       const { refreshToken } = req.payload;
-      const { id } = tokenManager.verifyRefreshToken(refreshToken);
+      await authHelper.validateRefreshTokenInDB(refreshToken);
 
-      const query = {
-        text: 'SELECT token FROM authentications WHERE token = $1',
-        values: [refreshToken],
-      };
-      const result = await pool.query(query);
-      if (result.rows.length === 0) {
-        throw OpenMusicErrorHandling('Refresh token tidak valid', 404);
-      }
+      const { id } = tokenManager.verifyRefreshToken(refreshToken);
       const accessToken = tokenManager.generateAccessToken({ id });
+
       const response = h.response({
         status: 'success',
         message: 'Authentication berhasil diperbarui',
@@ -64,8 +61,9 @@ const handler = {
         },
       });
       response.code(200);
+      return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 
@@ -73,10 +71,11 @@ const handler = {
     try {
       const validationResult = DeleteAuthenticationPayloadSchema.validate(req.payload);
       if (validationResult.error) {
-        throw OpenMusicErrorHandling(validationResult.error.message, 400);
+        throw setError.BadRequest(validationResult.error.message);
       }
 
       const { refreshToken } = req.payload;
+      await authHelper.validateRefreshTokenInDB(refreshToken);
 
       const query = {
         text: 'DELETE FROM authentications WHERE token = $1',
@@ -88,8 +87,9 @@ const handler = {
         message: 'Refresh token berhasil dihapus',
       });
       response.code(200);
+      return response;
     } catch (e) {
-      throw OpenMusicErrorHandling(e.message, 404);
+      throw new OpenMusicErrorHandling(e.message, e);
     }
   },
 };

@@ -47,10 +47,10 @@ const init = async () => {
   ]);
 
   server.ext('onPreResponse', (request) => {
-    const { response } = request;
+    let { response } = request;
     if (request.response.isBoom && response.output.payload.statusCode === 500) {
       const { error, statusCode, message } = response.output.payload;
-      return {
+      response = {
         statusCode: `${statusCode} (${error})`,
         status: 'fail',
         message,
