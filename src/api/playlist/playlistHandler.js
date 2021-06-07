@@ -54,11 +54,22 @@ const handler = {
       const token = authorization.replace(/^Bearer\s*/, '');
       const { id: owner } = tokenManager.verifyAccessToken(token);
 
+      console.log(owner);
+      // await playlistHelper.validatePlaylistByUserId(owner);
+
       const result = await playlistHelper.getPlaylistDataWithValidate(owner);
-      const { length } = result.rows;
-      if (length === 0) {
-        throw setError.NotFound('Data Not Found');
-      }
+      // const query = {
+      //   text: `
+      //     SELECT playlists.id, playlists.name, users.username
+      //     FROM playlists
+      //     JOIN users
+      //     ON playlists.owner = users.id AND playlists.owner = $1`,
+      //   values: [owner],
+      // };
+      // const result = await pool.query(query);
+      // if (result.rows.length === 0) {
+      //   throw setError.NotFound('Data Not Found');
+      // }
       const response = h.response({
         status: 'success',
         data: {
@@ -80,23 +91,14 @@ const handler = {
       }
 
       const token = authorization.replace(/^Bearer\s*/, '');
-      const { playlistId } = req.params;
       const { id: owner } = tokenManager.verifyAccessToken(token);
+      const { playlistId } = req.params;
 
-      console.log(playlistId);
-      console.log(owner);
-      // await playlistHelper.validatePlaylistByPlaylistIdAndUserId(playlistId, owner);
-      await playlistHelper.deletPlaylistWithValidate(playlistId, owner);
-      // await playlistHelper.deleteWithColaboration(playlistId, owner);
+      await playlistHelper.validatePlaylistByIdAndOwner(playlistId, owner);
+
       const query = {
-        text: `DELETE FROM playlists WHERE id = $1 AND owner = (
-          SELECT users.id
-          FROM playlists
-          JOIN collaborations ON playlists.id = collaborations.playlist_id
-          JOIN users ON playlists.owner = users.id
-          AND collaborations.user_id = $2
-        ) OR owner = $2`,
-        values: [playlistId, owner],
+        text: 'DELETE FROM playlists WHERE id = $1',
+        values: [playlistId],
       };
       await pool.query(query);
       const response = h.response({

@@ -54,11 +54,18 @@ const handler = {
         throw setError.BadRequest(validationResult.error.message);
       }
 
+      const { authorization } = req.headers;
+      if (!authorization) {
+        throw setError.Unauthorized('Token tidak ditemukan');
+      }
+
+      const token = authorization.replace(/^Bearer\s*/, '');
+      const { id: owner } = tokenManager.verifyAccessToken(token);
       const { playlistId, userId } = req.payload;
-      await playlistHelper.validatePlaylistByUserId(userId);
+      await playlistHelper.validatePlaylistByIdAndOwner(playlistId, owner);
 
       const query = {
-        text: 'DELETE FROM playlists WHERE id = $1 AND user_id = $2',
+        text: 'DELETE FROM collaborations WHERE playlist_id = $1 AND user_id = $2',
         values: [playlistId, userId],
       };
       await pool.query(query);
