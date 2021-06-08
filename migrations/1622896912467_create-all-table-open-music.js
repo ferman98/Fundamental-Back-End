@@ -12,8 +12,8 @@ exports.up = (pgm) => {
     duration INT NOT NULL ,
     date_insert TEXT NOT NULL ,
     date_update TEXT NOT NULL ,
-    PRIMARY KEY (id))
-    `);
+    PRIMARY KEY (id)
+    )`);
 
   // CREATE TABLE USERS
   pgm.sql(`CREATE TABLE users (
@@ -21,37 +21,39 @@ exports.up = (pgm) => {
     username VARCHAR(50) NOT NULL ,
     password TEXT NOT NULL ,
     fullname TEXT NOT NULL ,
-    PRIMARY KEY (id))
-    `);
+    PRIMARY KEY (id)
+    )`);
 
   // CREATE TABLE AUTHENTICATIONS
   pgm.sql(`CREATE TABLE authentications (
-    token TEXT NOT NULL )
-    `);
+    token TEXT NOT NULL
+    )`);
 
   // CREATE TABLE PLAYLIST
   pgm.sql(`CREATE TABLE playlists (
     id VARCHAR(50) NOT NULL ,
     name TEXT NOT NULL ,
     owner VARCHAR(50) NOT NULL ,
-    PRIMARY KEY (id))
-    `);
+    PRIMARY KEY (id)
+    )`);
 
   // CREATE TABLE PLAYLISTSONGS
   pgm.sql(`CREATE TABLE playlistsongs (
     id VARCHAR(50) NOT NULL ,
     playlist_id VARCHAR(50) NOT NULL ,
     song_id VARCHAR(50) NOT NULL ,
-    PRIMARY KEY (id))
-    `);
+    PRIMARY KEY (id)
+    )`);
 
   // CREATE TABLE COLLABORATIONS
   pgm.sql(`CREATE TABLE collaborations (
     id VARCHAR(50) NOT NULL ,
     playlist_id VARCHAR(50) NOT NULL ,
     user_id VARCHAR(50) NOT NULL ,
-    PRIMARY KEY (id))
-    `);
+    PRIMARY KEY (id),
+    UNIQUE(playlist_id),
+    UNIQUE(user_id)
+    )`);
 
   // RELASI USER DAN PLAYLISTS
   pgm.sql(`ALTER TABLE playlists ADD CONSTRAINT playlist_of_users FOREIGN KEY (owner) REFERENCES users(id) ON DELETE CASCADE ON UPDATE RESTRICT`);

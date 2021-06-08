@@ -1,6 +1,5 @@
 const pool = require('../../database');
 const setError = require('../../exception/errorSetter');
-const collaborationsHelper = require('../collaboration/helper');
 
 const playlistHelper = {
   async getPlaylistDataWithValidate(owner) {
@@ -9,7 +8,6 @@ const playlistHelper = {
       const result = await playlistHelper.getPlaylistDataBaseOnUser(owner);
       return result;
     } catch (e) {
-      await collaborationsHelper.validateColaborationByID(owner);
       const result = await playlistHelper.getPlaylistDataBaseOnCollaboration(owner);
       return result;
     }
@@ -34,7 +32,7 @@ const playlistHelper = {
       FROM playlists
       JOIN collaborations ON playlists.id = collaborations.playlist_id
       JOIN users ON playlists.owner = users.id
-      WHERE collaborations.user_id = $1`,
+      WHERE collaborations.user_id = $1 OR playlists.owner = $1`,
       values: [owner],
     };
     const result = await pool.query(query);
