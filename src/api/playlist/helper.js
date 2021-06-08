@@ -30,11 +30,11 @@ const playlistHelper = {
   async getPlaylistDataBaseOnCollaboration(owner) {
     const query = {
       text: `
-      SELECT collaborations.playlist_id, playlists.name, users.username
+      SELECT collaborations.playlist_id AS id, playlists.name, users.username
       FROM playlists
       JOIN collaborations ON playlists.id = collaborations.playlist_id
       JOIN users ON playlists.owner = users.id
-      AND collaborations.user_id = $1`,
+      WHERE collaborations.user_id = $1`,
       values: [owner],
     };
     const result = await pool.query(query);

@@ -54,22 +54,7 @@ const handler = {
       const token = authorization.replace(/^Bearer\s*/, '');
       const { id: owner } = tokenManager.verifyAccessToken(token);
 
-      console.log(owner);
-      // await playlistHelper.validatePlaylistByUserId(owner);
-
       const result = await playlistHelper.getPlaylistDataWithValidate(owner);
-      // const query = {
-      //   text: `
-      //     SELECT playlists.id, playlists.name, users.username
-      //     FROM playlists
-      //     JOIN users
-      //     ON playlists.owner = users.id AND playlists.owner = $1`,
-      //   values: [owner],
-      // };
-      // const result = await pool.query(query);
-      // if (result.rows.length === 0) {
-      //   throw setError.NotFound('Data Not Found');
-      // }
       const response = h.response({
         status: 'success',
         data: {
