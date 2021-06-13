@@ -6,6 +6,7 @@ const setError = require('../../exception/errorSetter');
 const { PostPlaylistSongPayloadSchema } = require('../../validator/playlistScheme');
 const songHelper = require('../song/helper');
 const playlistSongHelper = require('./helper');
+const cacheServices = require('../../redis/cacheService');
 
 const handler = {
   async postPlaylistSongHandler(req, h) {
@@ -35,6 +36,9 @@ const handler = {
       };
       await pool.query(query);
 
+      cacheServices.init();
+      cacheServices.delete(`playlistId:${playlistId}`);
+
       const response = h.response({
         status: 'success',
         message: 'Lagu berhasil ditambahkan ke playlist',
@@ -58,26 +62,45 @@ const handler = {
       const { playlistId } = req.params;
 
       await playlistSongHelper.validateOwner(playlistId, owner);
-
-      const query = {
-        text: `SELECT songs.id, songs.title, songs.performer
-        FROM songs
-        JOIN playlistsongs
-        ON songs.id = playlistsongs.song_id AND playlistsongs.playlist_id = $1`,
-        values: [playlistId],
-      };
-      const result = await pool.query(query);
-      if (result.rows.length === 0) {
-        throw setError.Forbidden('Data Not Found');
+      try {
+        cacheServices.init();
+        const result = await cacheServices.get(`playlistId:${playlistId}`);
+        const songs = JSON.parse(result);
+        const response = h.response({
+          status: 'success',
+          data: {
+            songs,
+          },
+        });
+        response.code(200);
+        return response;
+      } catch (e) {
+        try {
+          const query = {
+            text: `SELECT songs.id, songs.title, songs.performer
+            FROM songs
+            JOIN playlistsongs
+            ON songs.id = playlistsongs.song_id AND playlistsongs.playlist_id = $1`,
+            values: [playlistId],
+          };
+          const result = await pool.query(query);
+          if (result.rows.length === 0) {
+            throw setError.Forbidden('Data Not Found');
+          }
+          cacheServices.init();
+          cacheServices.set(`playlistId:${playlistId}`, JSON.stringify(result.rows));
+          const response = h.response({
+            status: 'success',
+            data: {
+              songs: result.rows,
+            },
+          });
+          response.code(200);
+          return response;
+        } catch (er) {
+          throw new OpenMusicErrorHandling(er.message, er);
+        }
       }
-      const response = h.response({
-        status: 'success',
-        data: {
-          songs: result.rows,
-        },
-      });
-      response.code(200);
-      return response;
     } catch (e) {
       throw new OpenMusicErrorHandling(e.message, e);
     }
@@ -103,6 +126,10 @@ const handler = {
         values: [playlistId, songId],
       };
       await pool.query(query);
+
+      cacheServices.init();
+      cacheServices.delete(`playlistId:${playlistId}`);
+
       const response = h.response({
         status: 'success',
         message: 'Lagu berhasil dihapus dari playlist',

@@ -1,6 +1,7 @@
 require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
+const Inert = require('@hapi/inert');
 const authPlugin = require('./plugin/authentications');
 const songPlugin = require('./plugin/song');
 const userPlugin = require('./plugin/users');
@@ -8,6 +9,8 @@ const playlistPlugin = require('./plugin/playlist');
 const playlistSongPlugin = require('./plugin/playlistSong');
 const collaborationPlugin = require('./plugin/collaboration');
 const exportPlaylistPlugin = require('./plugin/exportPlaylist');
+const uploadPlugin = require('./plugin/upload');
+const staticFile = require('./plugin/staticFile');
 
 const init = async () => {
   const server = Hapi.server({
@@ -21,6 +24,7 @@ const init = async () => {
   });
 
   await server.register([
+    Inert,
     authPlugin,
     songPlugin,
     userPlugin,
@@ -28,6 +32,8 @@ const init = async () => {
     playlistSongPlugin,
     collaborationPlugin,
     exportPlaylistPlugin,
+    uploadPlugin,
+    staticFile,
   ]);
 
   server.ext('onPreResponse', (request) => {
