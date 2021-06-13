@@ -7,6 +7,7 @@ const userPlugin = require('./plugin/users');
 const playlistPlugin = require('./plugin/playlist');
 const playlistSongPlugin = require('./plugin/playlistSong');
 const collaborationPlugin = require('./plugin/collaboration');
+const exportPlaylistPlugin = require('./plugin/exportPlaylist');
 
 const init = async () => {
   const server = Hapi.server({
@@ -20,30 +21,13 @@ const init = async () => {
   });
 
   await server.register([
-    {
-      plugin: authPlugin,
-      options: {},
-    },
-    {
-      plugin: songPlugin,
-      options: {},
-    },
-    {
-      plugin: userPlugin,
-      options: {},
-    },
-    {
-      plugin: playlistPlugin,
-      options: {},
-    },
-    {
-      plugin: playlistSongPlugin,
-      options: {},
-    },
-    {
-      plugin: collaborationPlugin,
-      options: {},
-    },
+    authPlugin,
+    songPlugin,
+    userPlugin,
+    playlistPlugin,
+    playlistSongPlugin,
+    collaborationPlugin,
+    exportPlaylistPlugin,
   ]);
 
   server.ext('onPreResponse', (request) => {
@@ -60,7 +44,6 @@ const init = async () => {
   });
 
   await server.start();
-  // eslint-disable-next-line no-console
   console.log(`Server berjalan pada ${server.info.uri}`);
 };
 

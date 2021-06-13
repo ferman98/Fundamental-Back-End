@@ -20,9 +20,9 @@ const handler = {
       }
 
       const token = authorization.replace(/^Bearer\s*/, '');
+      const { id: owner } = tokenManager.verifyAccessToken(token);
       const playlistId = `playlist-${nanoid(16)}`;
       const { name } = req.payload;
-      const { id: owner } = tokenManager.verifyAccessToken(token);
 
       const query = {
         text: 'INSERT INTO playlists(id, name, owner) VALUES($1, $2, $3)',
