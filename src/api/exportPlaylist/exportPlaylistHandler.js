@@ -4,7 +4,6 @@ const setError = require('../../exception/errorSetter');
 const exportPlaylistSchema = require('../../validator/exportPlaylistScheme');
 const ProducerService = require('../../rabbitmq/ProducerService');
 const playlistHelper = require('../playlist/helper');
-const playlistSongHelper = require('../playlistSong/helper');
 
 const handler = {
   async postExportPlaylistHandler(req, h) {
@@ -25,9 +24,8 @@ const handler = {
       const { playlistId } = req.params;
 
       await playlistHelper.validatePlaylistByIdAndOwner(playlistId, owner);
-      const songs = await playlistSongHelper.selectAllSongInPlaylist(playlistId);
       const message = {
-        songs,
+        playlistId,
         targetEmail,
       };
       await ProducerService.sendMessage('export:song-list', JSON.stringify(message));
